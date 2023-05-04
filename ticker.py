@@ -1,4 +1,4 @@
-import asyncio, websockets, random, json, threading, time, sqlite3
+import asyncio, websockets, random, json, threading, time
 from datetime import datetime
 
 def createRandomToken(length=12):
@@ -10,7 +10,7 @@ def getEpoch():
 
 class ticker:
     
-    def __init__(self, symbols='BINANCE:BTCUSDT', save=False, database_name='database.db', split_symbols=False, verbose=False):
+    def __init__(self, symbols='BINANCE:BTCUSDT', save=False, split_symbols=False, verbose=False):
         self.loop = asyncio.get_event_loop()
         if isinstance(symbols, str):
             symbols = [symbols]
@@ -20,45 +20,11 @@ class ticker:
             self.states[symbol] = {'volume': 0, 'price': 0, 'change': 0, 'changePercentage': 0}
         self.save = save
         self.connected = False
-        self.database_name = database_name
         self.split_symbols = split_symbols
 
         self.verbose = verbose
         if verbose:
             self.saves = 0
-
-    # Connect to database
-    async def connectToDatabase(self):
-        if self.save:
-            self.db = sqlite3.connect(self.database_name)
-            self.createSqlite3Table()
-            self.connected = True
-
-    # Create Sqlite3 table
-    def createSqlite3Table(self):
-        if self.split_symbols:
-            for symbol in self.symbols:
-                self.db.execute("""CREATE TABLE IF NOT EXISTS '{}' (
-                    volume real NOT NULL,
-                    price real NOT NULL,
-                    timestamp integer NOT NULL
-                )""".format(symbol))
-        else:
-            self.db.execute("""CREATE TABLE IF NOT EXISTS ticker_data (
-                volume real NOT NULL,
-                price real NOT NULL,
-                ticker text NOT NULL,
-                timestamp integer NOT NULL
-            )""")
-
-    # Insert data into table
-    def insertData(self, volume, price, ticker):
-        if self.save:
-            if self.split_symbols:
-                self.db.execute("INSERT INTO '"+ticker+"' VALUES (?, ?, ?)", (volume, price, getEpoch()))
-            else:
-                self.db.execute("INSERT INTO ticker_data VALUES (?, ?, ?, ?)", (volume, price, ticker, getEpoch()))
-            self.db.commit()
 
     # Connect to websocket
     async def connect(self):
@@ -69,8 +35,6 @@ class ticker:
     # Loop waiting for messages
     async def waitForMessages(self):
         await self.authenticate()
-        if self.save and not self.connected:
-            await self.connectToDatabase()
         while True:
             messages = await self.readMessage(await self.connection.recv())
             for message in messages:
@@ -176,4 +140,3 @@ class ticker:
             self.updateTask.cancel()
         self.loop.stop()
         self.thread.join()
-        self.db.close()
