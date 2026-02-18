@@ -72,7 +72,7 @@ Quantitative researcher and trading systems engineer with end-to-end ownership o
 
 Core focus areas:
 - Systematic strategy design and validation
-- Market microstructure analysis (order book dynamics, liquidity, spread behavior)
+- Market microstructure analysis (order book dynamics, volume, delta, liquidity, spread behavior)
 - Backtesting framework development (tick-level and historical data)
 - Execution engine architecture and order lifecycle management
 - Real-time market data processing
